@@ -1,19 +1,27 @@
-import { useState } from "react";
-import type { activity } from "../types";
+import { v4 as uuidv4 } from "uuid";
+import { useState, type Dispatch } from "react";
+import type { Activity } from "../types";
 import { categories } from "../data/categories";
+import type { ActivityActions } from "../reducers/activityReducer";
 
-export default function Form() {
+type FormProps = {
+    dispatch: Dispatch<ActivityActions>
+}
+
+const initialState : Activity = {
+    id: uuidv4(),
+    category: 1,
+    name: '',
+    calories: 0
+}
+
+export default function Form({dispatch}: FormProps) {
     // Se hace un solo state general para calories, activity y category, asi se hevita tener tres states y se simplifica
-    const [activity, setActivity] = useState<activity>({
-        category: 1,
-        name: '',
-        calories: 0
-    });
+    const [activity, setActivity] = useState<Activity>(initialState);
 
     const handleChange = (e: React.ChangeEvent<HTMLSelectElement, HTMLSelectElement> | React.ChangeEvent<HTMLInputElement, HTMLInputElement>) => {
 
         const isNumberField = ['category', 'calories'].includes(e.target.id);
-        console.log(isNumberField);
 
 
         setActivity({
@@ -27,9 +35,21 @@ export default function Form() {
         return name.trim() !== '' && calories > 0;
     }
 
+    const handleSubmit = (e: React.SubmitEvent<HTMLFormElement>) =>{
+        e.preventDefault();
+
+        dispatch({type: 'save.activity', payload: {newActivity: activity}});
+
+        setActivity({
+            ...initialState,
+            id: uuidv4(),
+        });
+    }
+
   return (
     <form
     className="space-y-5 bg-white shadow p-10 rounded-lg"
+    onSubmit={handleSubmit}
     >
         <div className="grid grid-cols-1 gap-3">
             <label htmlFor="category" className="font-bold">Categoría:</label>
@@ -74,7 +94,7 @@ export default function Form() {
             />
         </div> 
 
-        <input type="sumbit"
+        <input type="submit"
         className="bg-gray-800 hover:bg-gray-900 w-full p-2 font-bold uppercase text-white cursor-pointer text-center caret-transparent disabled:opacity-10"
         value={activity.category === 1 ? 'Guardar comida' : 'Guardar ejercicio'}
         disabled={!isValidActivity()}
